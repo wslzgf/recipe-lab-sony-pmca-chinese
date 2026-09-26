@@ -500,8 +500,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
             tag.setText(edit[R_PE] != 0 ? "PE" : "CS");
             tag.setTextColor(edit[R_PE] != 0 ? ACCENT : 0xDDFFFFFF);
             fav.setVisibility(favs.contains(recipe) ? View.VISIBLE : View.GONE);
-            if (protectedStore) { badge.setText("受保护"); badge.setBackgroundResource(R.drawable.badge_err); }
-            else if (dirty) { badge.setText("预览"); badge.setBackgroundResource(R.drawable.badge_warn); }
+            if (dirty) { badge.setText("未应用"); badge.setBackgroundResource(R.drawable.badge_warn); }
             else { badge.setText("已应用"); badge.setBackgroundResource(R.drawable.badge_ok); }
             meta.setText(Params.metaLine(cur, edit, previewOk ? null : previewErr));
             for (int i = 1; i < N; i++) {
