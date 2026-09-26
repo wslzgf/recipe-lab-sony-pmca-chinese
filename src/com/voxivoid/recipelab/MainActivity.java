@@ -173,9 +173,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         handler.removeCallbacks(hideToast);
         handler.removeCallbacks(enterHold); enterHeld = false; enterLong = false;
         holder.removeCallback(this);
-        // leave the live parameters equal to what is STORED (not to the launch snapshot): the camera writes some live
-        // values (exposure bias, WB fine-tune) straight back into the settings store, which would undo a fresh store
-        try { if (camera != null) { load(); System.arraycopy(cur, 0, edit, 0, N); applyPreview(); } } catch (Throwable t) {}
+        // 退出时恢复进入 app 前的原始相机参数，避免胶片坊的实时参数（picture-effect、
+        // 色彩矩阵、color-mode 等）残留，导致其他相机应用（如胶片工坊/FilmStudio）启动异常。
+        // 配方的持久化设置已在 writeAll 中 sync 到 settings store，不受此处恢复影响。
+        try { if (camera != null && origFlat != null) { Camera.Parameters p = camera.getParameters(); p.unflatten(origFlat); camera.setParameters(p); } } catch (Throwable t) {}
         try { if (camera != null) camera.stopPreview(); } catch (Throwable t) {}
         try { if (cameraEx != null) cameraEx.getClass().getMethod("release").invoke(cameraEx); } catch (Throwable t) {}
         cameraEx = null; camera = null;
