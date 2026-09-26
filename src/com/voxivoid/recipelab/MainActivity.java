@@ -255,7 +255,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
             int n = Params.dirtyRows(cur, edit, storedSub);
             for (Params.Write w : Params.writes(cur, edit, storedSub)) NativeBackup.writeByte(w.id, w.value);
             NativeBackup.sync();
-            msg = "已应用 — 写入 " + n + " 项设置，重启相机后全部生效";
+            msg = "已应用 — 写入 " + n + " 项设置，重启相机后照片/视频/菜单全部一致生效";
         } catch (Throwable t) { msg = "写入失败：" + t.getMessage(); }
         load(); stageRecipe();
         showToast(msg, 5000); render();
