@@ -193,15 +193,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private int rdu(int id) throws NativeException { return NativeBackup.readByte(id) & 0xff; }
 
     private void load() {
-        try {
-            for (int i = 1; i < N; i++) {
+        // 逐行容错：单个 slot（尤其 PE 子项 slot）在某些机型上读不到时，
+        // 跳过该行保留当前值，不中断其余设置的加载，也不再弹"读取失败"。
+        for (int i = 1; i < N; i++) {
+            try {
                 int id = ROW_ID[i];
                 if (id == SUB_SLOT) { int sid = Recipes.subId(cur[R_PE]); cur[i] = edit[i] = sid == 0 ? 0 : rdu(sid); continue; }
                 if (id == QUALITY_SLOTS) { cur[i] = edit[i] = readQuality(); continue; }
                 cur[i] = edit[i] = Params.fromStore(id, NativeBackup.readByte(id));
-            }
-            protectedStore = NativeBackup.isProtected();
-        } catch (Throwable t) { showToast("读取失败：" + t.getMessage(), 0); }
+            } catch (Throwable t) { /* 该行读取失败，保留 edit[i] 当前值 */ }
+        }
+        try { protectedStore = NativeBackup.isProtected(); } catch (Throwable t) { protectedStore = false; }
     }
 
     private void stageRecipe() {
