@@ -46,7 +46,7 @@
    [Sony-PMCA-RE Releases](https://github.com/ma1co/Sony-PMCA-RE/releases)，
    Windows 用户下载 `pmca-gui.exe`，无需安装，直接运行。
 2. **下载本应用 APK**：在本仓库的 [Releases](../../releases) 页面下载最新 APK 文件。
-3. **设置相机**：开机，菜单中进入 `设置 → USB连接`，选择 **海量存储器**，用 USB 线连接电脑。
+3. **设置相机**：开机，菜单中进入 `设置 → USB连接`，选择 **MTP**，用  micro usb（老机型基本上都是这个接口，按实际为准） 线连接电脑。
 4. **安装**：运行 `pmca-gui.exe` → 选择 **Install app from file** → 选中下载的 APK → 等待完成。
 5. 安装结束后拔线，关机再开机。应用位于 `MENU → 应用程序 → 应用程序列表`。
 
