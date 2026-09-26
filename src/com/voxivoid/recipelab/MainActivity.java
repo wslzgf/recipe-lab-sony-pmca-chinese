@@ -254,7 +254,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         try {
             int storedSub = storedSub();
             int n = Params.dirtyRows(cur, edit, storedSub);
-            for (Params.Write w : Params.writes(cur, edit, storedSub)) NativeBackup.writeByte(w.id, w.value);
+            java.util.List<Params.Write> ws = Params.writes(cur, edit, storedSub);
+            int[] attrs = new int[ws.size()];
+            for (int i = 0; i < ws.size(); i++) { try { attrs[i] = NativeBackup.attr(ws.get(i).id); } catch (Throwable t) { attrs[i] = -1; } }
+            java.util.List<Integer> locked = Params.lockedFrom(ws, attrs);
+            if (!locked.isEmpty()) { showToast(Params.lockedMessage(locked), 0); return; }
+            int written = 0;
+            for (Params.Write w : ws) { NativeBackup.writeByte(w.id, w.value); written++; }
             NativeBackup.sync();
             msg = "已应用 — 写入 " + n + " 项设置，重启相机后照片/视频/菜单全部一致生效";
         } catch (Throwable t) { msg = "写入失败：" + t.getMessage(); }
@@ -332,6 +338,20 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         } catch (Throwable t) { showToast("快照错误：" + t, 0); }
     }
 
+    // ------------------------------------------------------------ read-only check of the slots a recipe writes
+    /** test every slot a recipe writes for the read-only flag; write locks.txt for a compatibility report */
+    private void lockCheck() {
+        java.util.List<Integer> ids = Params.allSlots();
+        int[] attrs = new int[ids.size()];
+        for (int i = 0; i < attrs.length; i++) { try { attrs[i] = NativeBackup.attr(ids.get(i)); } catch (Throwable t) { attrs[i] = -1; } }
+        String text = Params.lockReport(ids, attrs);
+        try {
+            java.io.FileWriter w = new java.io.FileWriter(new File(getFilesDir(), "locks.txt"), true);
+            try { w.write(text + "\n" + Params.lockLines(ids, attrs)); } finally { w.close(); }
+        } catch (Throwable t) { text += "  ·  locks.txt 写入失败：" + t; }
+        showToast(text, 0);
+    }
+
     // ------------------------------------------------------------ developer menu (C1) and the sample run
     private void openMenu() {
         if (running) return;
@@ -352,6 +372,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private void pickMenuRow() {
         switch (menuSel) {
             case DevTools.ROW_SNAPSHOT: closeMenu(); snapshotOrDiff(); break;
+            case DevTools.ROW_LOCKS: closeMenu(); lockCheck(); break;
             case DevTools.ROW_SAMPLES: closeMenu(); startRun(); break;
             case DevTools.ROW_SETTLE:
                 settleIdx = DevTools.nextSettle(settleIdx, +1);

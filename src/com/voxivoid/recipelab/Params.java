@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
 
@@ -164,6 +166,87 @@ final class Params {
             w.add(new Write(id, v));
         }
         return w;
+    }
+
+    /** whether a slot's attribute word says the camera may refuse a write to it */
+    static final int ATTR_READ_ONLY = 1;
+    static boolean slotLocked(int attr) { return (attr & ATTR_READ_ONLY) != 0; }
+
+    /** every slot the app can write: the rows, their mirrors and per-mode copies, and each effect's sub-slot */
+    static List<Integer> allSlots() {
+        Set<Integer> ids = new LinkedHashSet<Integer>();
+        for (int i = 1; i < N; i++) if (ROW_ID[i] > 0) ids.add(ROW_ID[i]);
+        ids.add(ID_WB_AB_AWB); ids.add(ID_WB_GM_AWB); ids.add(ID_WB_AB_K); ids.add(ID_WB_GM_K);
+        ids.add(ID_EV2); ids.add(ID_DRO_LVL);
+        ids.add(ID_QFMT); ids.add(ID_QJPG); ids.add(ID_QFMT2); ids.add(ID_QJPG2);
+        for (int pe = 0; pe < Recipes.PE_KEYS.length; pe++) { int sid = Recipes.subId(pe); if (sid != 0) ids.add(sid); }
+        return new ArrayList<Integer>(ids);
+    }
+
+    /** the row a slot belongs to, as a message names it; the hex id for a slot no row owns */
+    static String slotName(int id) {
+        switch (id) {
+            case ID_EV: case ID_EV2: return ROW_NAME[R_EV];
+            case ID_QFMT: case ID_QJPG: case ID_QFMT2: case ID_QJPG2: return ROW_NAME[R_QUAL];
+            case ID_WB_AB: case ID_WB_AB_AWB: case ID_WB_AB_K: return ROW_NAME[R_AB];
+            case ID_WB_GM: case ID_WB_GM_AWB: case ID_WB_GM_K: return ROW_NAME[R_GM];
+            case ID_DRO: case ID_DRO_LVL: return ROW_NAME[R_DRO];
+        }
+        for (int i = 1; i < N; i++) if (ROW_ID[i] > 0 && ROW_ID[i] == id) return ROW_NAME[i];
+        for (int pe = 0; pe < Recipes.PE_KEYS.length; pe++) { int sid = Recipes.subId(pe); if (sid != 0 && sid == id) return ROW_NAME[R_SUB] + " " + Recipes.PE_LABEL[pe]; }
+        return String.format("%08x", id);
+    }
+
+    /** the row names of a set of slots, each named once, in the order the slots come */
+    private static String slotNames(List<Integer> ids) {
+        Set<String> names = new LinkedHashSet<String>();
+        for (int id : ids) names.add(slotName(id));
+        StringBuilder s = new StringBuilder();
+        for (String n : names) { if (s.length() > 0) s.append(", "); s.append(n); }
+        return s.toString();
+    }
+
+    /** the slots of a pending write the camera holds read-only; a slot whose attribute cannot be read counts as writable */
+    static List<Integer> lockedFrom(List<Write> ws, int[] attrs) {
+        List<Integer> locked = new ArrayList<Integer>();
+        for (int i = 0; i < ws.size(); i++) if (attrs[i] >= 0 && slotLocked(attrs[i])) locked.add(ws.get(i).id);
+        return locked;
+    }
+
+    /** the recipe was not written because the camera holds some of its slots read-only */
+    static String lockedMessage(List<Integer> ids) {
+        return "未写入 — 相机将 " + (ids.size() == 1 ? "此项设置" : "这些设置") + " 设为只读：" + slotNames(ids)
+                + "。请用 OpenMemories-Tweak 解锁设置区后再选用配方。";
+    }
+
+    /** the camera refused a write: which setting stopped it, and how much went in before it did */
+    static String writeFailedMessage(int id, String error, int written) {
+        return "写入失败 " + slotName(id) + " (" + String.format("%08x", id) + "): " + error
+                + (written == 0 ? " — 未写入任何内容" : " — 停止前已写入 " + written + " 字节");
+    }
+
+    /** the verdict of the read-only check (developer menu) */
+    static String lockReport(List<Integer> ids, int[] attrs) {
+        List<Integer> locked = new ArrayList<Integer>();
+        int unreadable = 0;
+        for (int i = 0; i < ids.size(); i++) {
+            if (attrs[i] < 0) unreadable++;
+            else if (slotLocked(attrs[i])) locked.add(ids.get(i));
+        }
+        return "已检查 " + ids.size() + " 个配方槽位  ·  "
+                + (locked.isEmpty() ? "无只读槽位" : locked.size() + " 个只读：" + slotNames(locked))
+                + (unreadable == 0 ? "" : "  ·  " + unreadable + " 个无法读取");
+    }
+
+    /** the same check, one line per slot, written to locks.txt for a compatibility report */
+    static String lockLines(List<Integer> ids, int[] attrs) {
+        StringBuilder s = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) {
+            int id = ids.get(i);
+            s.append(String.format("%08x", id)).append(' ').append(slotName(id)).append(' ')
+             .append(attrs[i] < 0 ? "attr=?" : "attr=" + attrs[i] + (slotLocked(attrs[i]) ? " READ_ONLY" : "")).append('\n');
+        }
+        return s.toString();
     }
 
     /** stages a recipe over the current edit values (WB is left alone when the recipe says so); quality is the caller's */

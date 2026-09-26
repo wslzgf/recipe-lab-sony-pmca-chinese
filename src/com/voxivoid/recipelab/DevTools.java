@@ -14,7 +14,7 @@ final class DevTools {
     static final String TITLE = "开发者工具";
 
     /** menu rows, in display order */
-    static final int ROW_SNAPSHOT = 0, ROW_SAMPLES = 1, ROW_SETTLE = 2, ROWS = 3;
+    static final int ROW_SNAPSHOT = 0, ROW_LOCKS = 1, ROW_SAMPLES = 2, ROW_SETTLE = 3, ROWS = 4;
 
     /**
      * Settle delays to pick from, in ms: how long the preview pipeline gets after a recipe is applied before the
@@ -40,6 +40,7 @@ final class DevTools {
     static String rowLabel(int row, boolean snapshotTaken, int settle) {
         switch (row) {
             case ROW_SNAPSHOT: return snapshotTaken ? "设置差异对比" : "设置快照";
+            case ROW_LOCKS: return "只读检查 — " + Params.allSlots().size() + " 个槽位";
             case ROW_SAMPLES: return "拍摄样张 — " + Recipes.ALL.length + " 个配方";
             case ROW_SETTLE: return "稳定延迟 — " + settleLabel(settle);
             default: return "?" + row;
@@ -50,6 +51,7 @@ final class DevTools {
     static String rowDetail(int row, boolean snapshotTaken) {
         switch (row) {
             case ROW_SNAPSHOT: return snapshotTaken ? "将每个设置项与快照逐一对比" : "记录所有设置项的当前值";
+            case ROW_LOCKS: return "检测配方写入的每个槽位是否被相机设为只读";
             case ROW_SAMPLES: return "按配方表顺序每个配方拍一张 JPEG — 按 MENU 停止";
             case ROW_SETTLE: return "应用配方后到快门触发之间的等待时间";
             default: return "";
