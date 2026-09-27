@@ -76,7 +76,7 @@ A5000、A7S、A7S II、NEX-5R、NEX-6、A68、A77 II、A99 II、RX100 III、RX10
 本仓库附带一键安装脚本，免去手动配置的麻烦，自动完成：下载安装工具 → 获取最新汉化 APK → 检测相机 → 安装到相机。
 
 **方式一：下载便携包（最简单，含工具与 APK，离线可用）**
-1. 前往本仓库 [Releases](../../releases) 页面，下载 **`胶片坊_RecipeLab_相机自动安装.zip`**
+1. 前往本仓库 [Releases](../../releases) 页面，下载 **`RecipeLab-CN-Portable-Installer.zip`**（胶片坊一键安装便携包）
 2. 解压到任意位置（U 盘、电脑桌面均可）
 3. 相机开机，USB 连接模式设为 **MTP**，用数据线连接电脑
 4. 双击 **`install_camera.bat`** → 弹出管理员授权时点**「是」** → 自动安装完成
